@@ -28,7 +28,7 @@ var gameController = (function () {
         scores: [0, 0],
         globalScores: [0, 0],
         currentActivePlayer: 0,
-        gamePlaying: true
+        gamePlaying: false
     };
 
 
@@ -47,7 +47,7 @@ var gameController = (function () {
         activePlayer = data.currentActivePlayer;
 
         data.scores[activePlayer] = 0;
-        
+
         activePlayer === 0 ? activePlayer = 1 : activePlayer = 0;
 
         data.currentActivePlayer = activePlayer;
@@ -80,6 +80,7 @@ var gameController = (function () {
                 data.scores[currentActive] += diceValue;
                 roundScore = data.scores[currentActive];
                 console.log("[addScores] Round Score of Current Active is " + data.scores[currentActive]);
+
                 return roundScore;
 
             } else {
@@ -105,6 +106,7 @@ var gameController = (function () {
 
             if (finalScore < 10 || finalScore === null || finalScore === undefined || isNaN(finalScore)) {
                 data.gamePlaying = false;
+                finalScore = 0;
             } else {
                 data.gamePlaying = true;
                 return finalScore;
@@ -151,13 +153,45 @@ var gameController = (function () {
                 globalScores: [0, 0],
                 roundScore: 0,
                 currentActivePlayer: 0,
-                gamePlaying: true
+                gamePlaying: false
             }
+        },
+        
+        // Input Players' Name Mode
+        inputNameMode: function(event, targetClass, callback, inputViewClass){
+            
+            if (targetClass == targetClass) {
+            callback;
+            event.target.parentNode.classList.add(inputViewClass);
+            
+        } else {
+            var targetClass = event.target.parentNode.classList[1];
+            
+            if (targetClass !== inputViewClass) {
+                callback;
+                event.target.parentNode.classList.remove(inputViewClass);
+            }
+            
+        }
+             
+        },
+        
+        
+        // Spliting dot from Class
+        splittingClass: function(input){
+            
+            input = input.split('.');
+            input = input[1];
+            
+            return input;
+            
         },
 
     }
 
 })();
+
+
 
 
 // UI Controller
@@ -171,13 +205,15 @@ var UIConroller = (function () {
         holdBtn: '.btn-hold',
         newGameBtn: '.btn-new',
         dice: '.dice',
-        namePlayer1: 'name-0',
-        namePlayer2: 'name-1',
+        namePlayer1: 'playerName0',
+        namePlayer2: 'playerName1',
         finalScore: '.final-score',
         alert: '.alert',
         alertClose: '.alert-close',
         player1: 'Player 1',
-        player2: 'Player 2'
+        player2: 'Player 2',
+        wrapper: '.wrapper',
+        inputView: '.input-view'
     };
 
 
@@ -208,6 +244,7 @@ var UIConroller = (function () {
         document.getElementById(DOMStrings.namePlayer2).textContent = 'Player 2';
         document.querySelector('.player-0-panel').classList.add('active');
         document.querySelector(DOMStrings.finalScore).disabled = false;
+        document.querySelector(DOMStrings.wrapper).classList.remove('game-ends');
 
         gameController.resetGame();
 
@@ -246,9 +283,14 @@ var UIConroller = (function () {
 
         // Update Current Score
         getCurrentScore: function (roundScore, currentPlayer) {
+
+            if (roundScore === undefined) {
+                roundScore = 0;
+            }
+
             document.getElementById("current-" + currentPlayer).textContent = roundScore;
         },
-        
+
 
         // Show Global Score
         displayGlobalScore: function (currentPlayer, currentPlayerGlobalScore) {
@@ -259,11 +301,12 @@ var UIConroller = (function () {
         displayGameWinner: function (currentPlayer, currentPlayerGlobalScore, winningScore) {
 
             if (currentPlayerGlobalScore > winningScore) {
-                document.getElementById("name-" + currentPlayer).textContent = "Winner!";
+                document.getElementById("playerName" + currentPlayer).textContent = "Winner!";
                 document.querySelector('.player-' + currentPlayer + '-panel').classList.remove('active');
                 document.querySelector('.player-' + currentPlayer + '-panel').classList.add('winner');
-                document.getElementById('name-' + currentPlayer).textContent = 'Winner!';
+                document.getElementById('playerName' + currentPlayer).textContent = 'Winner!';
                 document.querySelector('.dice').style.display = 'none';
+                document.querySelector(DOMStrings.wrapper).classList.add('game-ends');
 
                 resetClasses();
 
@@ -293,7 +336,6 @@ var UIConroller = (function () {
 // Main Controller
 var controller = (function (UICtrl, gameCtrl) {
 
-
     // Calling Strings from UICtrl
     var DOM = UICtrl.getDOMStrings();
 
@@ -305,33 +347,29 @@ var controller = (function (UICtrl, gameCtrl) {
         document.querySelector(DOM.newGameBtn).addEventListener('click', newGame);
         document.querySelector(DOM.finalScore).addEventListener('change', gameStartAlert);
         document.querySelector(DOM.alertClose).addEventListener('click', hidingAlert);
-        document.querySelector("body").addEventListener('click', claimWin);
+        document.querySelector(DOM.wrapper).addEventListener('click', claimWin);
+        document.querySelector(DOM.wrapper).addEventListener('click', playerName);
     };
 
 
     // Roll Dice
     var rollDice = function () {
-        var isGamePlaying, finalScoreInput, currentPlayer;
-        
-        currentPlayer = gameCtrl.getCurrentActivePlayer();
 
-        // To make Game Status true or false based on input 
-        finalScoreInput = gameCtrl.finalScoreInput();
+        var isGamePlaying, currentPlayer;
+
+        currentPlayer = gameCtrl.getCurrentActivePlayer();
 
         // Getting Game Status 
         isGamePlaying = gameCtrl.getGameStatus();
 
-        gameCtrl.getGameStatus();
-
-
         if (isGamePlaying) {
             console.log('Dice is rolled');
-            
+
             var diceInput, roundScore;
 
             // Getting Random Dice Value Generated
             diceInput = gameCtrl.diceVal();
-            
+
             // Getting RoundScore of Current Player
             roundScore = gameCtrl.addScores(currentPlayer, diceInput);
 
@@ -342,7 +380,7 @@ var controller = (function (UICtrl, gameCtrl) {
             UICtrl.clearInput();
 
             // Consoling Current Dice
-            console.log("Current Dice " + diceInput);
+            console.log("Current Dice from rollDice() is " + diceInput);
 
             // Showing Correct Dice Image
             UICtrl.getDiceImage(diceInput);
@@ -360,16 +398,17 @@ var controller = (function (UICtrl, gameCtrl) {
 
         // To make Game Status true or false based on input 
         finalScoreInput = gameCtrl.finalScoreInput();
-        
+
         isGamePlaying = gameCtrl.getGameStatus();
         winningScore = gameCtrl.finalScoreInput();
-        
+
         if (isGamePlaying) {
             console.log('Dice is on Hold now');
 
             var currentPlayer, currentPlayerScore, globalScore;
 
             currentPlayer = gameCtrl.getCurrentActivePlayer();
+            
             currentPlayerScore = gameCtrl.getCurrentPlayerScore(currentPlayer);
 
             // Move to Next Player on Hold
@@ -407,17 +446,44 @@ var controller = (function (UICtrl, gameCtrl) {
     // If RoundScore of current Player reaches Winning Score
     var claimWin = function () {
         var winningScore, currentPlayer, currentScore, currentGlobalScore, estimatedGlobalScore, currentPlayerScore;
-                
+
         winningScore = gameCtrl.finalScoreInput();
         currentPlayer = gameCtrl.getCurrentActivePlayer();
         currentScore = gameCtrl.getScores();
         currentPlayerScore = currentScore[currentPlayer];
         currentGlobalScore = gameCtrl.getGlobalScore(currentPlayer);
         estimatedGlobalScore = currentGlobalScore + currentPlayerScore;
-                
-        if(estimatedGlobalScore > winningScore) {
-        UICtrl.showAlert("Player "+(currentPlayer + 1)+" You have reached the winning total of " +winningScore+ ". Hold and claim your Victory!");
+        
+        console.log("estimatedGlobalScore is " + estimatedGlobalScore + "and winningScore " + winningScore)
+
+        if (estimatedGlobalScore > winningScore) {
+            UICtrl.showAlert("Player " + (currentPlayer + 1) + " You have reached the winning total of " + winningScore + ". Hold and claim your Victory!");
         }
+    };
+
+    // Player Name Setup
+    var playerName = function (event) {
+        var isGamePlaying, targetClass, playerName, firstPlayerScore, removeClass, inputViewClass;
+
+        inputViewClass = gameCtrl.splittingClass(DOM.inputView);
+        isGamePlaying = gameCtrl.getGameStatus();
+
+        firstPlayerScore = gameCtrl.getScores();
+
+        console.log("firstPlayerScore is " + firstPlayerScore[0] + " and game status is " + isGamePlaying);
+
+        targetClass = event.target.parentNode.classList;
+        playerName = document.querySelectorAll('.player-name');
+
+        removeClass = function () {
+            gameCtrl.nodeListForEach(playerName, function (current, index) {
+                current.classList.remove(inputViewClass);
+            });
+        };
+        
+        // Showing Input Fields on clicking Players' Name
+        gameCtrl.inputNameMode(event, 'player-name', removeClass(), inputViewClass);
+        
     };
 
 

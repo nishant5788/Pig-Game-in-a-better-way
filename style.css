@@ -98,6 +98,21 @@ body {
     position: relative;
 }
 
+.player-name.input-view .player-name-text {
+    display: none;
+}
+
+.player-name.input-view .player-name-input {
+    display: block;
+}
+
+.player-name-input {
+    display: none;
+    margin: 0 auto;
+    height: 45px;
+    padding: 10px;
+}
+
 .player-score {
     text-align: center;
     font-size: 80px;
