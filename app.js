@@ -27,6 +27,7 @@ var gameController = (function () {
     data = {
         scores: [0, 0],
         globalScores: [0, 0],
+        playersName: ['Player 1', 'Player 2'],
         currentActivePlayer: 0,
         gamePlaying: false
     };
@@ -47,7 +48,7 @@ var gameController = (function () {
         activePlayer = data.currentActivePlayer;
 
         data.scores[activePlayer] = 0;
-
+        
         activePlayer === 0 ? activePlayer = 1 : activePlayer = 0;
 
         data.currentActivePlayer = activePlayer;
@@ -61,7 +62,8 @@ var gameController = (function () {
         });
 
         document.querySelector('.player-' + activePlayer + '-panel').classList.add('active');
-        document.getElementById('current-' + activePlayer).textContent = 0;
+        document.getElementById('current-1').textContent = 0;
+        document.getElementById('current-0').textContent = 0;
 
     };
 
@@ -124,6 +126,10 @@ var gameController = (function () {
         getCurrentActivePlayer: function () {
             return data.currentActivePlayer;
         },
+        
+        getCurrentPlayerName: function(currentPlayer){
+            return data.playersName[currentPlayer];
+        },
 
         getCurrentPlayerScore: function (currentActivePlayer) {
             return data.scores[currentActivePlayer];
@@ -151,40 +157,46 @@ var gameController = (function () {
             return data = {
                 scores: [0, 0],
                 globalScores: [0, 0],
+                playersName: ['Player 1', 'Player 2'],
                 roundScore: 0,
                 currentActivePlayer: 0,
                 gamePlaying: false
             }
         },
         
-        // Input Players' Name Mode
-        inputNameMode: function(event, targetClass, callback, inputViewClass){
-            
-            if (targetClass == targetClass) {
-            callback;
-            event.target.parentNode.classList.add(inputViewClass);
-            
-        } else {
-            var targetClass = event.target.parentNode.classList[1];
-            
-            if (targetClass !== inputViewClass) {
-                callback;
-                event.target.parentNode.classList.remove(inputViewClass);
-            }
-            
-        }
-             
+        // Return All Data
+        returnData: function(){
+            return data;
         },
-        
-        
+
+        // Input Players' Name Mode
+        inputNameMode: function (event, targetClass, callback, inputViewClass) {
+
+            if (targetClass == targetClass) {
+                callback;
+                event.target.parentNode.classList.add(inputViewClass);
+
+            } else {
+                var targetClass = event.target.parentNode.classList[1];
+
+                if (targetClass !== inputViewClass) {
+                    callback;
+                    event.target.parentNode.classList.remove(inputViewClass);
+                }
+
+            }
+
+        },
+
+
         // Spliting dot from Class
-        splittingClass: function(input){
-            
+        splittingClass: function (input) {
+
             input = input.split('.');
             input = input[1];
-            
+
             return input;
-            
+
         },
 
     }
@@ -205,13 +217,12 @@ var UIConroller = (function () {
         holdBtn: '.btn-hold',
         newGameBtn: '.btn-new',
         dice: '.dice',
-        namePlayer1: 'playerName0',
-        namePlayer2: 'playerName1',
+        namePlayer1: 'playerName-0',
+        namePlayer2: 'playerName-1',
+        playerNameInput: '.player-name-input',
         finalScore: '.final-score',
         alert: '.alert',
         alertClose: '.alert-close',
-        player1: 'Player 1',
-        player2: 'Player 2',
         wrapper: '.wrapper',
         inputView: '.input-view'
     };
@@ -244,7 +255,7 @@ var UIConroller = (function () {
         document.getElementById(DOMStrings.namePlayer2).textContent = 'Player 2';
         document.querySelector('.player-0-panel').classList.add('active');
         document.querySelector(DOMStrings.finalScore).disabled = false;
-        document.querySelector(DOMStrings.wrapper).classList.remove('game-ends');
+        document.querySelector('body').classList.remove('game-ends');
 
         gameController.resetGame();
 
@@ -301,24 +312,36 @@ var UIConroller = (function () {
         displayGameWinner: function (currentPlayer, currentPlayerGlobalScore, winningScore) {
 
             if (currentPlayerGlobalScore > winningScore) {
-                document.getElementById("playerName" + currentPlayer).textContent = "Winner!";
+                document.getElementById("playerName-" + currentPlayer).textContent = "Winner!";
                 document.querySelector('.player-' + currentPlayer + '-panel').classList.remove('active');
                 document.querySelector('.player-' + currentPlayer + '-panel').classList.add('winner');
-                document.getElementById('playerName' + currentPlayer).textContent = 'Winner!';
+                document.getElementById('playerName-' + currentPlayer).textContent = 'Winner!';
                 document.querySelector('.dice').style.display = 'none';
-                document.querySelector(DOMStrings.wrapper).classList.add('game-ends');
+                document.querySelector('body').classList.add('game-ends');
 
                 resetClasses();
 
                 document.querySelector('.player-' + currentPlayer + '-panel').classList.add('winner');
 
                 gameController.gameStatusFalse();
+                
+                
+                return true;
             }
+            
+            return false;
         },
 
 
         // Show Alert
         showAlert: function (msg) {
+            /*var alerts = document.querySelectorAll(DOMStrings.alert);
+            alerts = Array.prototype.slice.call(alerts);
+            
+            alerts.forEach(function(current, index){
+                current.style.display = "none";
+            });*/
+            
             document.querySelector(DOMStrings.alert).style.display = "block";
             document.querySelector(DOMStrings.alert + "-text").textContent = msg;
             setTimeout(hideAlert, 2000);
@@ -326,6 +349,21 @@ var UIConroller = (function () {
             function hideAlert() {
                 document.querySelector(DOMStrings.alert).style.display = "none";
             }
+        },
+
+        // Change Player's Name
+        changePlayerName: function () {
+            var playerNameInput = document.querySelectorAll(DOMStrings.playerNameInput);
+
+            playerNameInput = Array.prototype.slice.call(playerNameInput);
+
+            playerNameInput.forEach(function (current, index) {
+                current.addEventListener('change', function () {
+                    var inputText = current.value;
+                    document.getElementById("playerName-" + index).textContent = inputText;
+                    
+                });
+            });
         },
 
 
@@ -351,6 +389,9 @@ var controller = (function (UICtrl, gameCtrl) {
         document.querySelector(DOM.wrapper).addEventListener('click', playerName);
     };
 
+
+    // Changing Players' Name      
+    UICtrl.changePlayerName();
 
     // Roll Dice
     var rollDice = function () {
@@ -405,10 +446,10 @@ var controller = (function (UICtrl, gameCtrl) {
         if (isGamePlaying) {
             console.log('Dice is on Hold now');
 
-            var currentPlayer, currentPlayerScore, globalScore;
+            var currentPlayer, currentPlayerScore, globalScore, gameWinnerStatus;
 
             currentPlayer = gameCtrl.getCurrentActivePlayer();
-            
+
             currentPlayerScore = gameCtrl.getCurrentPlayerScore(currentPlayer);
 
             // Move to Next Player on Hold
@@ -424,7 +465,12 @@ var controller = (function (UICtrl, gameCtrl) {
             UICtrl.displayGlobalScore(currentPlayer, globalScore);
 
             // Display Winner if it reaches Score
-            UICtrl.displayGameWinner(currentPlayer, globalScore, winningScore);
+            gameWinnerStatus = UICtrl.displayGameWinner(currentPlayer, globalScore, winningScore);
+            
+            // Show Alert if Player Won
+            if(gameWinnerStatus) {
+            UICtrl.showAlert("Player " + (currentPlayer + 1) + " You have won with total of " + winningScore + " score.");
+            }
 
         }
 
@@ -445,7 +491,7 @@ var controller = (function (UICtrl, gameCtrl) {
 
     // If RoundScore of current Player reaches Winning Score
     var claimWin = function () {
-        var winningScore, currentPlayer, currentScore, currentGlobalScore, estimatedGlobalScore, currentPlayerScore;
+        var winningScore, currentPlayer, currentPlayerName, currentScore, currentGlobalScore, estimatedGlobalScore, currentPlayerScore;
 
         winningScore = gameCtrl.finalScoreInput();
         currentPlayer = gameCtrl.getCurrentActivePlayer();
@@ -453,24 +499,26 @@ var controller = (function (UICtrl, gameCtrl) {
         currentPlayerScore = currentScore[currentPlayer];
         currentGlobalScore = gameCtrl.getGlobalScore(currentPlayer);
         estimatedGlobalScore = currentGlobalScore + currentPlayerScore;
-        
-        console.log("estimatedGlobalScore is " + estimatedGlobalScore + "and winningScore " + winningScore)
+        currentPlayerName = gameCtrl.getCurrentPlayerName(currentPlayer);
 
         if (estimatedGlobalScore > winningScore) {
-            UICtrl.showAlert("Player " + (currentPlayer + 1) + " You have reached the winning total of " + winningScore + ". Hold and claim your Victory!");
+            UICtrl.showAlert(currentPlayerName + " You have reached the winning total of " + winningScore + ". Hold and claim your Victory!");
         }
     };
 
     // Player Name Setup
     var playerName = function (event) {
-        var isGamePlaying, targetClass, playerName, firstPlayerScore, removeClass, inputViewClass;
+        
+        var isGamePlaying, targetClass, playerName, currentPlayer, currentPlayerScore, removeClass, inputViewClass, gameClass;
 
         inputViewClass = gameCtrl.splittingClass(DOM.inputView);
         isGamePlaying = gameCtrl.getGameStatus();
-
-        firstPlayerScore = gameCtrl.getScores();
-
-        console.log("firstPlayerScore is " + firstPlayerScore[0] + " and game status is " + isGamePlaying);
+        gameClass = document.querySelector('body').classList;
+        
+        currentPlayer = gameCtrl.getCurrentActivePlayer();
+        currentPlayerScore = gameCtrl.getCurrentPlayerScore(currentPlayer);
+        
+        console.log("currentPlayerScore is " + currentPlayerScore + " and isGamePlaying is " + isGamePlaying);
 
         targetClass = event.target.parentNode.classList;
         playerName = document.querySelectorAll('.player-name');
@@ -481,9 +529,12 @@ var controller = (function (UICtrl, gameCtrl) {
             });
         };
         
+
         // Showing Input Fields on clicking Players' Name
+        if(isGamePlaying === false && currentPlayerScore === 0 && gameClass != "game-ends") {
+            
         gameCtrl.inputNameMode(event, 'player-name', removeClass(), inputViewClass);
-        
+        }
     };
 
 
@@ -509,3 +560,8 @@ var controller = (function (UICtrl, gameCtrl) {
 
 // App Init
 controller.init();
+
+/*
+function $(x) {return document.getElementById(x);} 
+$('heading').classList.add("testig");
+*/
